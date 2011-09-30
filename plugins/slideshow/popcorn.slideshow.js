@@ -1,0 +1,4 @@
+/* 
+* Popcorn Slideshow Plugin
+
+*/
