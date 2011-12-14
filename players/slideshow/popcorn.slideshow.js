@@ -100,24 +100,14 @@
   
   // A constructor, but we need to wrap it to allow for "static" functions
   Popcorn.slideshow.init = (function() {
-//   var rPlayerUri = /^http:\/\/slideshare\.net\/andrearsya\/[\w]+/i,
-//    var rPlayerUri = "http://player.slideshow.com/slideshow/thirst-upload-800x600-1215534320518707-8",
 
-//      rWebUrl = /slideshare\.net\/andrearsya\/[\w]+/,
- //      rWebUrl = "/slideshow.com/slideshow/thirst-upload-800x600-1215534320518707-8",
- 
- 
- //http://player.vimeo.com/video/11127501
- //http://www.slideshare.net/andrearsya/thirst-upload-800x600-1215534320518707-8-1864524
  
      var rPlayerUri = /^http:\/\/slideshare\.net\/[\S]+\/[\S]+/i,
      rWebUrl = /slideshare\.net\/[\S]+\/[\S]+/,
  
 	        hasAPILoaded = false;
     
-    // Extract the numeric video id from container uri: 'http://player.slideshow.com/video/11127501' or 'http://player.slideshow.com/video/4282282'
-    // Expect id to be a valid 32/64-bit unsigned integer
-    // Returns string, empty string if could not match
+
     function extractIdFromUri( uri ) {
       if ( !uri ) {
         return;
@@ -129,10 +119,7 @@
 	 //return matches;
     }
     
-    // Extract the numeric video id from url: 'http://slideshow.com/11127501' or simply 'slideshow.com/4282282'
-    // Ignores protocol and subdomain, but one would expecct it to be http://www.slideshow.com/#######
-    // Expect id to be a valid 32/64-bit unsigned integer
-    // Returns string, empty string if could not match
+
     function extractIdFromUrl( url ) {
       if ( !url ) {
         return;
@@ -157,10 +144,8 @@
           attributes = {};
           
       flashvars = {
-       //doc : "thesurvivalstrategyofthecloudcomputingera20111119zemdistribution-111120211523-phpapp01",
+
 	   doc : slideId,
-	   //clip_id: "thirst-upload-800x600-1215534320518707-8-1864524",
-	   //clip_id: slideId,
         show_portrait: 1,
         show_byline: 1,
         show_title: 1,
@@ -178,8 +163,7 @@
         wmode: 'transparent'
       };
       
-	  //flashvars = { doc : "thirst-upload-800x600-1215534320518707-8" };
-  
+
       swfobject.embedSWF( "http://static.slidesharecdn.com/swf/ssplayer2.swf", containerId, self.offsetWidth, self.offsetHeight, "9.0.0", "expressInstall.swf", flashvars, params );
     }
     
@@ -242,7 +226,7 @@
       this.offsetLeft = 0;
       this.offsetTop = 0;
       
-      // Try and get a video id from a slideshow site url
+      // Try and get a slide id from a slideshow site url
       // Try either from ctor param or from iframe itself
       slideId = extractIdFromUrl( slideUrl ) || extractIdFromUri( slideUrl );
       
@@ -295,8 +279,9 @@
   Popcorn.extend( Popcorn.slideshow.prototype, {
 
   // jump to slide
+  // empty method right now as 
     jumpToSlide: function() {
-      alert("jump to slide");
+
     
 
     },
