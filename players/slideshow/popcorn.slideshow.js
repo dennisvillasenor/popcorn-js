@@ -125,7 +125,6 @@
       //var matches = rPlayerUri;
 
       var matches = uri.match( rPlayerUri );
-	  alert("URI " + matches);
 	  return matches ? matches[0].substr(25) : "";
 	 //return matches;
     }
@@ -140,16 +139,15 @@
       }
       //var matches = rWebUrl;
       var matches = url.match( rWebUrl );
-	  	  alert("URL " + matches[0].substr(25) );
       return matches ? matches[0].substr(25) : "";
 	  //return matches;
     }
       
-    function makeSwf( self, vidId, containerId ) {
+    function makeSwf( self, slideId, containerId ) {
      
 	  if ( !window.swfobject ) {
         setTimeout( function() {
-          makeSwf( self, vidId, containerId );
+          makeSwf( self, slideId, containerId );
         }, 1);
         return;
       }
@@ -160,9 +158,9 @@
           
       flashvars = {
        //doc : "thesurvivalstrategyofthecloudcomputingera20111119zemdistribution-111120211523-phpapp01",
-	   doc : vidId,
+	   doc : slideId,
 	   //clip_id: "thirst-upload-800x600-1215534320518707-8-1864524",
-	   //clip_id: vidId,
+	   //clip_id: slideId,
         show_portrait: 1,
         show_byline: 1,
         show_title: 1,
@@ -180,21 +178,20 @@
         wmode: 'transparent'
       };
       
-	  alert("vidId " + vidId);
 	  //flashvars = { doc : "thirst-upload-800x600-1215534320518707-8" };
   
-      swfobject.embedSWF( "http://static.slidesharecdn.com/swf/ssplayer2.swf", containerId, self.offsetWidth, self.offsetHeight, "9.0.0", "expressInstall.swf", flashvars, params, attributes );
+      swfobject.embedSWF( "http://static.slidesharecdn.com/swf/ssplayer2.swf", containerId, self.offsetWidth, self.offsetHeight, "9.0.0", "expressInstall.swf", flashvars, params );
     }
     
     // If container id is not supplied, assumed to be same as player id
-    var ctor = function ( containerId, videoUrl, options ) {
+    var ctor = function ( containerId, slideUrl, options ) {
       if ( !containerId ) {
         throw "Must supply an id!";
       } else if ( /file/.test( location.protocol ) ) {
         throw "Must run from a web server!";
       }
       
-      var vidId,
+      var slideId,
           that = this,
           tmp;
 
@@ -209,18 +206,11 @@
       
       this.addEventFn;
       this.evtHolder;
-      this.paused = true;
-      this.duration = Number.MAX_VALUE;
-      this.ended = 0;
       this.currentTime = 0;
-      this.volume = 1;
-      this.loop = 0;
-      this.initialTime = 0;
-      this.played = 0;
+
       this.readyState = 0;
       
       this.previousCurrentTime = this.currentTime;
-      this.previousVolume = this.volume;
       this.evtHolder = new EventManager( this );
       
       // For calculating position relative to video (like subtitles)
@@ -254,15 +244,15 @@
       
       // Try and get a video id from a slideshow site url
       // Try either from ctor param or from iframe itself
-      vidId = extractIdFromUrl( videoUrl ) || extractIdFromUri( videoUrl );
+      slideId = extractIdFromUrl( slideUrl ) || extractIdFromUri( slideUrl );
       
-      if ( !vidId ) {
+      if ( !slideId ) {
         throw "No video id";
       }
       
       registry[ this._container.id ] = this;
       
-      makeSwf( this, vidId, this._container.id );
+      makeSwf( this, slideId, this._container.id );
       
       // Set up listeners to internally track state as needed
       this.addEventListener( "load", function() {
@@ -278,25 +268,6 @@
           that.currentTime = that.swfObj.api_getCurrentTime();
         });
         
-        // Add pause listener to keep track of playing state
-        
-        that.addEventListener( "pause", function() {
-          that.paused = true;
-        });
-        
-        // Add play listener to keep track of playing state
-        that.addEventListener( "playing", function() {
-          that.paused = false;
-          that.ended = 0;
-        });
-        
-        // Add ended listener to keep track of playing state
-        that.addEventListener( "ended", function() {
-          if ( that.loop !== "loop" ) {
-            that.paused = true;
-            that.ended = 1;
-          }
-        });
         
         // Add progress listener to keep track of ready state
         that.addEventListener( "progress", function( data ) {
@@ -326,134 +297,10 @@
   // jump to slide
     jumpToSlide: function() {
       alert("jump to slide");
+    
+
     },
 
-
-
-    // Do everything as functions instead of get/set
-    setLoop: function( val ) {
-      if ( !val ) {
-        return;
-      }
-      
-      this.loop = val;
-      var isLoop = val === "loop" ? 1 : 0;
-      // HTML convention says to loop if value is 'loop'
-      this.swfObj.api_setLoop( isLoop );
-    },
-    // Set the volume as a value between 0 and 1
-    setVolume: function( val ) {
-      if ( !val && val !== 0 ) {
-        return;
-      }
-      
-      // Normalize in case outside range of expected values
-      if ( val < 0 ) {
-        val = -val;
-      }
-      
-      if ( val > 1 ) {
-        val %= 1;
-      }
-      
-      // HTML video expects to be 0.0 -> 1.0, slideshow expects 0-100
-      this.volume = this.previousVolume = val;
-      this.swfObj.api_setVolume( val*100 );
-      this.evtHolder.dispatchEvent( "volumechange" );
-    },
-    // Seeks the video
-    setCurrentTime: function ( time ) {
-      if ( !time && time !== 0 ) {
-        return;
-      }
-      
-      this.currentTime = this.previousCurrentTime = time;
-      this.ended = time >= this.duration;
-      this.swfObj.api_seekTo( time );
-      
-      // Fire events for seeking and time change
-      this.evtHolder.dispatchEvent( "seeked" );
-      this.evtHolder.dispatchEvent( "timeupdate" );
-    },
-    // Play the video
-    play: function() {
-      // In case someone is cheeky enough to try this before loaded
-      if ( !this.swfObj ) {
-        this.addEventListener( "load", this.play );
-        return;
-      }
-      
-      if ( !this.played ) {
-        this.played = 1;
-        this.startTimeUpdater();
-        this.evtHolder.dispatchEvent( "loadstart" );
-      }
-      
-      this.evtHolder.dispatchEvent( "play" );
-      this.swfObj.api_play();
-    },
-    // Pause the video
-    pause: function() {
-      // In case someone is cheeky enough to try this before loaded
-      if ( !this.swfObj ) {
-        this.addEventListener( "load", this.pause );
-        return;
-      }
-      
-      this.swfObj.api_pause();
-    },
-    // Toggle video muting
-    // Unmuting will leave it at the old value
-    mute: function() {
-      // In case someone is cheeky enough to try this before loaded
-      if ( !this.swfObj ) {
-        this.addEventListener( "load", this.mute );
-        return;
-      }
-      
-      if ( !this.muted() ) {
-        this.oldVol = this.volume;
-        
-        if ( this.paused ) {
-          this.setVolume( 0 );
-        } else {
-          this.volume = 0;
-        }
-      } else {
-        if ( this.paused ) {
-          this.setVolume( this.oldVol );
-        } else {
-          this.volume = this.oldVol;
-        }
-      }
-    },
-    muted: function() {
-      return this.volume === 0;
-    },
-    // Force loading by playing the player. Pause afterwards
-    load: function() {
-      // In case someone is cheeky enough to try this before loaded
-      if ( !this.swfObj ) {
-        this.addEventListener( "load", this.load );
-        return;
-      }
-      
-      this.play();
-      this.pause();
-    },
-    unload: function() {
-      // In case someone is cheeky enough to try this before loaded
-      if ( !this.swfObj ) {
-        this.addEventListener( "load", this.unload );
-        return;
-      }
-      
-      this.pause();
-      
-      this.swfObj.api_unload();
-      this.evtHolder.dispatchEvent( "abort" );
-      this.evtHolder.dispatchEvent( "emptied" );
-    },
     // Hook an event listener for the player event into internal event system
     // Stick to HTML conventions of add event listener and keep lowercase, without prependinng "on"
     addEventListener: function( evt, fn ) {
@@ -464,20 +311,11 @@
       evt = evt.type || evt.toLowerCase();
       
       // If it's an HTML media event supported by player, map
-      if ( evt === "seeked" ) {
-        playerEvt = "onSeek";
-      } else if ( evt === "timeupdate" ) {
+      if ( evt === "timeupdate" ) {
         playerEvt = "onProgress";
       } else if ( evt === "progress" ) {
         playerEvt = "onLoading";
-      } else if ( evt === "ended" ) {
-        playerEvt = "onFinish";
-      } else if ( evt === "playing" ) {
-        playerEvt = "onPlay";
-      } else if ( evt === "pause" ) {
-        // Direct mapping, CamelCase the event name as slideshow API expects
-        playerEvt = "on"+evt[0].toUpperCase() + evt.substr(1);
-      }
+      } 
       
       // slideshow only stores 1 callback per event
       // Have slideshow call internal collection of callbacks
@@ -485,20 +323,12 @@
       
       // Link manual event structure with slideshow's if not already
       if( playerEvt && this.evtHolder.getEventListeners( evt ).length === 1 ) {
-        // Setup global functions on Popcorn.slideshow to sync player events to an internal collection
-        // Some events expect 2 args, some only one (the player id)
-        if ( playerEvt === "onSeek" || playerEvt === "onProgress" || playerEvt === "onLoading" ) {
-          Popcorn.slideshow[playerEvt] = function( arg1, arg2 ) {
-            var player = registry[arg2];
-            
-            player.evtHolder.dispatchEvent( evt, arg1 );
-          };
-        } else {
+
           Popcorn.slideshow[playerEvt] = function( arg1 ) {
             var player = registry[arg1];
             player.evtHolder.dispatchEvent( evt );
           };
-        }
+
         
         this.swfObj.api_addEventListener( playerEvt, "Popcorn.slideshow."+playerEvt );
       }
@@ -523,20 +353,7 @@
       } else {
         this.previousCurrentTime = this.currentTime;
       }
-      
-      if ( this.volume !== this.previousVolume ) {
-        this.setVolume( this.volume );
-      }
-      
-      if ( !self.paused || seeked ) {
-        this.dispatchEvent( 'timeupdate' );
-      }
-      
-      if( !self.ended ) {
-        setTimeout( function() {
-          self.startTimeUpdater.call(self);
-        }, timeupdateInterval);
-      }
+
     }
   });
 })( Popcorn, window );
